@@ -12,6 +12,7 @@ services:
       - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
       - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
       - xpack.security.enabled=$ELASTIC_SECURITY
+      - xpack.security.authc.api_key.enabled=$ELASTIC_SECURITY
     ulimits:
       memlock:
         soft: -1
@@ -33,9 +34,34 @@ services:
       ELASTICSEARCH_HOSTS: '["http://es01:9200"]'
       ELASTICSEARCH_USERNAME: elastic
       ELASTICSEARCH_PASSWORD: $ELASTIC_PASSWORD
+      xpack.security.enabled: $ELASTIC_SECURITY
+      xpack.encryptedSavedObjects.encryptionKey: $KIBANA_ENC
     networks:
       - elastic
-      
+  fleet01:
+    container_name: fleet01
+    user: root
+    image: docker.elastic.co/beats/elastic-agent:7.15.1
+    environment:
+      - FLEET_SERVER_ENABLE=true
+      - FLEET_SERVER_ELASTICSEARCH_HOST=http://es01:9200
+      - FLEET_SERVER_ELASTICSEARCH_USERNAME=elastic
+      - FLEET_SERVER_ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
+      - FLEET_ENROLL=1
+      - FLEET_URL=https://fleet01:8220
+      - KIBANA_HOST=http://kib01:5601
+      - KIBANA_USERNAME=elastic
+      - KIBANA_PASSWORD=$ELASTIC_PASSWORD
+      - ELASTICSEARCH_HOST=http://es01:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
+      - KIBANA_FLEET_SETUP=1
+    ports:
+      - 8220:8220
+    restart: on-failure
+    networks:
+      - elastic
+     
 volumes:
   data01:
     driver: local
